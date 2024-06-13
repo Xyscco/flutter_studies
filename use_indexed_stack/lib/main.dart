@@ -1,58 +1,42 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MyHomePage(),
+      home: IndexedStackExample(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class IndexedStackExample extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _IndexedStackExampleState createState() => _IndexedStackExampleState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _IndexedStackExampleState extends State<IndexedStackExample> {
   int _selectedIndex = 0;
-  List<Widget> _widgets = [];
+  List<Widget> _pages = [];
+  List<int> _keys = [];
 
   @override
   void initState() {
     super.initState();
-    _widgets = [
-      FirstWidget(key: UniqueKey(), onRemove: (index) => _removeWidget(index)),
-      SecondWidget(key: UniqueKey(), onRemove: (index) => _removeWidget(index)),
-    ];
+    _keys = List<int>.generate(
+        5, (index) => index); // Cria chaves únicas para os widgets
+    _pages =
+        _keys.map((key) => MyPage(key: ValueKey(key), index: key)).toList();
   }
 
-  void _onItemTapped(int index) {
+  void _removePage() {
     setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  void _addWidget() {
-    setState(() {
-      _widgets.add(ThirdWidget(
-        key: UniqueKey(),
-        onRemove: (index) => _removeWidget(index),
-      ));
-      _selectedIndex = _widgets.length - 1;
-    });
-  }
-
-  void _removeWidget(int index) {
-    setState(() {
-      if (_widgets.length > 1) {
-        _widgets.removeAt(index);
-        if (_selectedIndex >= _widgets.length - 1) {
-          _selectedIndex = _widgets.length - 1;
+      if (_pages.length > 1) {
+        _pages.removeAt(_selectedIndex);
+        _keys.removeAt(_selectedIndex);
+        if (_selectedIndex >= _pages.length) {
+          _selectedIndex = _pages.length - 1;
         }
       }
     });
@@ -63,157 +47,63 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('IndexedStack Example'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: _addWidget,
-          ),
-        ],
       ),
       body: IndexedStack(
         index: _selectedIndex,
-        children: _widgets.asMap().entries.map((entry) {
-          int index = entry.key;
-          Widget widget = entry.value;
-          return _buildRemovableWidget(widget, index);
-        }).toList(),
+        children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: List.generate(_widgets.length, (index) {
+        currentIndex: _selectedIndex,
+        items: List.generate(_pages.length, (index) {
           return BottomNavigationBarItem(
-            icon: Icon(Icons.widgets),
-            label: 'Widget ${index + 1}',
+            label: 'Page $index',
+            icon: Icon(Icons.pages),
           );
         }),
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _removePage,
+        child: Icon(Icons.remove),
       ),
     );
   }
+}
 
-  Widget _buildRemovableWidget(Widget widget, int index) {
-    return Stack(
-      children: [
-        widget,
-        Positioned(
-          top: 8,
-          right: 8,
-          child: IconButton(
-            icon: Icon(Icons.close, color: Colors.red),
-            onPressed: () => _removeWidget(index),
+class MyPage extends StatefulWidget {
+  final Key key;
+  final int index;
+
+  MyPage({required this.key, required this.index}) : super(key: key);
+
+  @override
+  _MyPageState createState() => _MyPageState();
+}
+
+class _MyPageState extends State<MyPage> {
+  int _counter = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Page ${widget.index}'),
+          Text('Counter: $_counter'),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _counter++;
+              });
+            },
+            child: Text('Increment'),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class FirstWidget extends StatefulWidget {
-  final Function(int) onRemove;
-
-  const FirstWidget({required Key key, required this.onRemove}) : super(key: key);
-
-  @override
-  _FirstWidgetState createState() => _FirstWidgetState();
-}
-
-class _FirstWidgetState extends State<FirstWidget> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text('First Widget Counter: $_counter'),
-            ElevatedButton(
-              onPressed: _incrementCounter,
-              child: Text('Increment'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class SecondWidget extends StatefulWidget {
-  final Function(int) onRemove;
-
-  const SecondWidget({required Key key, required this.onRemove}) : super(key: key);
-
-  @override
-  _SecondWidgetState createState() => _SecondWidgetState();
-}
-
-class _SecondWidgetState extends State<SecondWidget> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text('Second Widget Counter: $_counter'),
-            ElevatedButton(
-              onPressed: _incrementCounter,
-              child: Text('Increment'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ThirdWidget extends StatefulWidget {
-  final Function(int) onRemove;
-
-  const ThirdWidget({required Key key, required this.onRemove}) : super(key: key);
-
-  @override
-  _ThirdWidgetState createState() => _ThirdWidgetState();
-}
-
-class _ThirdWidgetState extends State<ThirdWidget> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text('Third Widget Counter: $_counter'),
-            ElevatedButton(
-              onPressed: _incrementCounter,
-              child: Text('Increment'),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

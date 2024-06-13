@@ -16,17 +16,18 @@ class _HomePageState extends State<HomePage> {
     WidgetModel(
         idWidget: const Uuid().v4(),
         descricao: 'Widget One',
-        widget: const WidgetOne(),
+        widget: WidgetOne(key: PageStorageKey(UniqueKey())),
         ativo: false),
     WidgetModel(
         idWidget: const Uuid().v4(),
         descricao: 'Widget Two',
-        widget: const WidgetTwo(),
+        widget: WidgetTwo(key: PageStorageKey(UniqueKey())),
         ativo: false)
   ];
 
   int widgetIndex = 0;
-  PageController pageController = PageController();
+  final PageController _pageController = PageController();
+  final PageStorageBucket _bucket = PageStorageBucket();
 
   @override
   void initState() {
@@ -38,15 +39,17 @@ class _HomePageState extends State<HomePage> {
       widgets.add(WidgetModel(
           idWidget: const Uuid().v4(),
           descricao: 'Widget Two 2',
-          widget: const WidgetTwo(),
+          widget: WidgetTwo(key: PageStorageKey(UniqueKey())),
           ativo: false));
     });
   }
 
   void removeWidget(index) {
-    setState(() {
-      widgets.removeAt(index);
-    });
+    if (widgets.length > 1) {
+      setState(() {
+        widgets.removeAt(index);
+      });
+    }
   }
 
   @override
@@ -97,11 +100,14 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
-            IndexedStack(
-              index: widgetIndex,
-              children:
-                  widgets.map((widgetModel) => widgetModel.widget).toList(),
-            )
+            PageStorage(
+              bucket: _bucket,
+              child: PageView(
+                controller: _pageController,
+                children:
+                    widgets.map((widgetModel) => widgetModel.widget).toList(),
+              ),
+            ),
           ],
         ),
       ),
