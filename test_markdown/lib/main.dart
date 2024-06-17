@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:url_launcher/link.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,31 +35,63 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  Map<String, String> separateProtocolAndAddress(String url) {
+    Uri uri = Uri.parse(url);
+    return {
+      'protocol': uri.scheme,
+      'address': uri.host,
+    };
+  }
+
+  Future<void> _launchInBrowser(String url) async {
+    Map<String, String> result = separateProtocolAndAddress(url);
+    print(result);
+    Uri uri =
+        Uri(scheme: result['protocol'], host: result['address'], path: '');
+
+    if (!await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    )) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var markdown = """
-# Here's a simple Go program that prints "Hello, world!" to the console😀:
+# <center> Ajuda </center>
 
-``` 
-package main
-import "fmt"
+- Nova Ajuda
 
-func main() {
-    fmt.Println("Hello, world!")
-} 
+---
+
+> Bloco de notas
+
+[Link](https://www.pub.dev)
+
+*Italic* com *
+
+_Italic_ com _
+
+**Bold**	com *
+
+__Bold__ com _
+
+![Image](https://commonmark.org/help/images/favicon.png)
+
+`Inline code` with backticks
+
+```
+# code block
+print '3 backticks or'
+print 'indent 4 spaces'
 ```
 
-Save the above code in a file with a ` .go ` extension, for example ` hello.go `. Then, you can run the program by executing the following command in your terminal:
-
-```shell
-go run hello.go 
-```
-
-The output will be:
-
-```
-Hello, world!
-```
+<details>
+<summary>Clique aqui para exibir</summary>
+texto oculto
+</details>
 """;
 
     return Scaffold(
@@ -70,17 +104,20 @@ Hello, world!
             selectable: true,
             data: markdown,
             styleSheet: MarkdownStyleSheet(
-              h1: const TextStyle(fontSize: 24, color: Colors.blue),
               code: const TextStyle(
                   fontSize: 14,
                   color: Colors.white,
                   backgroundColor: Colors.grey),
               codeblockPadding: const EdgeInsets.all(8),
+              img: const TextStyle(fontSize: 15),
               codeblockDecoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
                 color: Colors.grey,
               ),
             ),
+            onTapLink: (_, href, __) {
+              _launchInBrowser(href!);
+            },
           ),
         ));
   }
